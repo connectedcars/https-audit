@@ -76,6 +76,8 @@ export interface DomainCheck {
 export interface CheckDomainOptions {
   altNamesSameIp?: boolean
   family: 4 | 6
+  minumumCertificateDaysLeftWarning?: number
+  minumumCertificateDaysLeftCritical?: number
 }
 
 export async function checkDomain(domain: string, options?: CheckDomainOptions): Promise<DomainCheck> {
@@ -86,7 +88,7 @@ export async function checkDomain(domain: string, options?: CheckDomainOptions):
     // The certificate failed to validate with the CA certificate we have installed
     if (!certificate.authorized) {
       errors.push(
-        new CertificateFailedValidation('Certificate failed validation', { cause: certificate.authorizationError })
+        new CertificateFailedValidationError('Certificate failed validation', { cause: certificate.authorizationError })
       )
     }
 
@@ -100,11 +102,11 @@ export async function checkDomain(domain: string, options?: CheckDomainOptions):
         const dnsName = await lookupDnsName(subject, { family: options?.family })
         if (dnsName.error) {
           if ('code' in dnsName.error && dnsName.error.code === 'ENOTFOUND') {
-            errors.push(new DomainCheckError(`Alt name ${subject} does not resolve`))
+            errors.push(new AltNameDoesResolveError(`Alt name ${subject} does not resolve`))
           }
         } else if (dnsName.ip !== certificate.address) {
           errors.push(
-            new DomainCheckError(
+            new AltNameDoesResolveToSameIpError(
               `Alt name ${subject}(${dnsName.ip}) does not resolve to the same IP address as ${domain}(${certificate.address})`
             )
           )
@@ -115,6 +117,12 @@ export async function checkDomain(domain: string, options?: CheckDomainOptions):
     const validTo = new Date(certificate.certificate.valid_to)
     const now = new Date()
     const daysLeft = Math.round((validTo.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+    if (daysLeft < (options?.minumumCertificateDaysLeftCritical || 7)) {
+      errors.push(new CertificateClosesToExpiredError(`Certificate expires in ${daysLeft} days`))
+    } else if (daysLeft < (options?.minumumCertificateDaysLeftWarning || 14)) {
+      errors.push(new CertificateCriticallyCloseToExpiredError(`Certificate expires in ${daysLeft} days`))
+    }
 
     return {
       domain,
@@ -132,11 +140,18 @@ export async function checkDomain(domain: string, options?: CheckDomainOptions):
   }
 }
 
-export class DomainCheckError extends Error {
+export abstract class DomainCheckError extends Error {
   public constructor(message: string, options: ErrorOptions = {}) {
     super(message, options)
     this.name = this.constructor.name
   }
 }
 
-export class CertificateFailedValidation extends DomainCheckError {}
+export class DomainCheckCriticalError extends DomainCheckError {}
+export class DomainCheckWarningError extends DomainCheckError {}
+
+export class AltNameDoesResolveError extends DomainCheckWarningError {}
+export class AltNameDoesResolveToSameIpError extends DomainCheckWarningError {}
+export class CertificateFailedValidationError extends DomainCheckCriticalError {}
+export class CertificateClosesToExpiredError extends DomainCheckCriticalError {}
+export class CertificateCriticallyCloseToExpiredError extends DomainCheckCriticalError {}

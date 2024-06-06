@@ -2,11 +2,13 @@ import log from '@connectedcars/logutil'
 import http from 'http'
 
 import { HttpIncomingMessage, HttpServer, HttpServerOptions } from './http/http-server'
-import { checkDomain } from './https-cert-audit'
+import { checkDomain, DomainCheckCriticalError, DomainCheckWarningError } from './https-cert-audit'
 
 export type ServerOptions = HttpServerOptions & {
   checkInterval?: number
   dnsNames: string[]
+  minumumCertificateDaysLeftWarning?: number
+  minumumCertificateDaysLeftCritical?: number
 }
 
 export class Server extends HttpServer {
@@ -14,11 +16,15 @@ export class Server extends HttpServer {
   private checkInterval: number
   private dnsNames: string[]
   private running: boolean = false
+  private minumumCertificateDaysLeftWarning: number
+  private minumumCertificateDaysLeftCritical: number
 
   public constructor(options: ServerOptions) {
     super(options)
     this.checkInterval = options.checkInterval || 600_000
     this.dnsNames = options.dnsNames
+    this.minumumCertificateDaysLeftWarning = options.minumumCertificateDaysLeftWarning || 14
+    this.minumumCertificateDaysLeftCritical = options.minumumCertificateDaysLeftCritical || 14
   }
 
   public async start(): Promise<void> {
@@ -66,9 +72,20 @@ export class Server extends HttpServer {
 
   private async checkDomains(): Promise<void> {
     for (const domain of this.dnsNames) {
-      const response = await checkDomain(domain, { family: 4, altNamesSameIp: true })
+      const response = await checkDomain(domain, {
+        family: 4,
+        altNamesSameIp: true,
+        minumumCertificateDaysLeftWarning: this.minumumCertificateDaysLeftWarning,
+        minumumCertificateDaysLeftCritical: this.minumumCertificateDaysLeftCritical
+      })
       if (response.errors.length > 0) {
-        log.error(`Check domain failed for ${domain}`, { domain, errors: response.errors.map(e => e.message) })
+        if (response.errors.some(e => e instanceof DomainCheckCriticalError)) {
+          log.critical(`Check domain failed for ${domain}`, { domain, errors: response.errors.map(e => e.message) })
+        } else if (response.errors.some(e => e instanceof DomainCheckWarningError)) {
+          log.warn(`Check domain failed for ${domain}`, { domain, errors: response.errors.map(e => e.message) })
+        } else {
+          log.warn(`Check domain failed for ${domain}`, { domain, errors: response.errors.map(e => e.message) })
+        }
       } else {
         log.info(`Check domain ${domain}`, {
           domain,

@@ -12,3 +12,15 @@ export function getDnsNames(): string[] {
 export function getCheckInterval(): number {
   return process.env.CHECK_INTERVAL ? parseInt(process.env.CHECK_INTERVAL) * 1000 : 600_000
 }
+
+export function getMinumumCertificateDaysLeftWarning(): number {
+  return process.env.MINUMUM_CERTIFICATE_DAYS_LEFT_WARNING
+    ? parseInt(process.env.MINUMUM_CERTIFICATE_DAYS_LEFT_WARNING)
+    : 14
+}
+
+export function getMinumumCertificateDaysLeftCritical(): number {
+  return process.env.MINUMUM_CERTIFICATE_DAYS_LEFT_CRITICAL
+    ? parseInt(process.env.MINUMUM_CERTIFICATE_DAYS_LEFT_CRITICAL)
+    : 7
+}
