@@ -1,12 +1,16 @@
 import log from '@connectedcars/logutil'
 
-import { getListenPort } from './config'
+import { getCheckInterval, getDnsNames, getListenPort } from './config'
 import { Server } from './server'
 
 async function main(): Promise<void> {
   const listenPort = getListenPort()
+  const dnsNames = getDnsNames()
+  const checkInterval = getCheckInterval()
   const server = new Server({
-    listenPort
+    listenPort,
+    dnsNames,
+    checkInterval
   })
   await server.start()
   log.info(`HTTP server running at 0.0.0.0:${listenPort}`)
