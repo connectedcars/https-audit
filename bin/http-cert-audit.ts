@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-import { getTlsCertificate } from '../src/https-cert-audit'
+import { getTlsCertificateInfo } from '../src/https-cert-audit'
 
 async function main(argv: string[]) {
   const domains = argv.slice(2)
   for (const domain of domains) {
     try {
-      const certificate = await getTlsCertificate(domain)
+      const certificate = await getTlsCertificateInfo(domain)
       const commonName = certificate.certificate.subject.CN
       const altNames = certificate.certificate.subjectaltname?.split(/,\s*/).map(a => a.replace(/^DNS:/, '')) ?? []
       const subjects = [...new Set([commonName, ...altNames])]
