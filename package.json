@@ -22,7 +22,8 @@
     "prepublishOnly": "rm -rf build"
   },
   "dependencies": {
-    "@connectedcars/logutil": "^6.0.0"
+    "@connectedcars/logutil": "^6.0.0",
+    "@connectedcars/test": "^1.4.1"
   },
   "devDependencies": {
     "@babel/cli": "7.24.6",
