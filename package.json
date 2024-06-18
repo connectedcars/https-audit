@@ -5,7 +5,7 @@
   "main": "build/dist/src/index.js",
   "types": "build/dist/src/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "TZ=UTC jest",
     "cov": "TZ=UTC jest --coverage=true",
     "build": "build src bin",
     "build:js": "build --skip-typings src bin",
