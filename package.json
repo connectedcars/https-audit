@@ -22,8 +22,7 @@
     "prepublishOnly": "rm -rf build"
   },
   "dependencies": {
-    "@connectedcars/logutil": "^6.0.0",
-    "@connectedcars/test": "^1.4.1"
+    "@connectedcars/logutil": "^6.0.0"
   },
   "devDependencies": {
     "@babel/cli": "7.24.6",
@@ -35,6 +34,7 @@
     "@babel/preset-env": "7.24.6",
     "@babel/preset-typescript": "7.24.6",
     "@connectedcars/setup": "^0.23.0",
+    "@connectedcars/test": "^1.4.1",
     "@types/jest": "29.5.12",
     "@typescript-eslint/eslint-plugin": "7.11.0",
     "@typescript-eslint/parser": "7.11.0",
