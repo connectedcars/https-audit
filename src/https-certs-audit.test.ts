@@ -3,7 +3,7 @@ import { checkDomain, lookupDnsName } from './https-cert-audit'
 describe('https-certs-audit', () => {
   it('lookupDnsName', async () => {
     const response = await lookupDnsName('google.com')
-    expect(response).toEqual({ error: null, ip: expect.any(String), name: 'google.com' })
+    expect(response).toEqual({ error: undefined, ip: expect.any(String), name: 'google.com' })
   })
 
   it('lookupDnsName unknown domain', async () => {
