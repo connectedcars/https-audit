@@ -47,12 +47,17 @@ export class Server extends HttpServer {
 
   protected async requestListener(req: HttpIncomingMessage, res: http.ServerResponse): Promise<void | unknown> {
     switch (req.url) {
-      case '/_status': {
-        return res.end()
+      case '/_status':
+      case '/liveness':
+      case '/readiness': {
+        res.end()
+        return
       }
+
       default: {
         res.statusCode = 404
-        return res.end('Not found')
+        res.end('Not found')
+        return
       }
     }
   }
