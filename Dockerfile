@@ -1,6 +1,6 @@
 ARG NODE_VERSION=stable
 
-FROM gcr.io/connectedcars-staging/node-builder.master:$NODE_VERSION as builder
+FROM europe-west1-docker.pkg.dev/connectedcars-build/node-builder/master:$NODE_VERSION as builder
 
 ARG COMMIT_SHA=master
 
@@ -22,7 +22,7 @@ RUN npm run ci-audit
 RUN npm run ci-eslint
 
 # Continue build
-FROM gcr.io/connectedcars-staging/node-base.master:$NODE_VERSION
+FROM europe-west1-docker.pkg.dev/connectedcars-build/node-base/master:$NODE_VERSION
 
 USER nobody
 
