@@ -2,7 +2,7 @@ import axios from 'axios'
 
 import { HttpServer, HttpServerOptions, readHttpJson, writeHttpJson } from './http-server'
 
-export type TestHttpServerOptions = HttpServerOptions
+type TestHttpServerOptions = HttpServerOptions
 
 class TestHttpServer extends HttpServer {
   public constructor(options: TestHttpServerOptions = {}) {
