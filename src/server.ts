@@ -3,12 +3,17 @@ import http from 'http'
 
 import { HttpIncomingMessage, HttpServer, HttpServerOptions } from './http/http-server'
 import { checkDomain, DomainCheckCriticalError, DomainCheckWarningError } from './https-cert-audit'
+import { GcpKubernetesClient } from './integration/gcp-kubernetes'
 
 export type ServerOptions = HttpServerOptions & {
   checkInterval?: number
   dnsNames: string[]
   minumumCertificateDaysLeftWarning?: number
   minumumCertificateDaysLeftCritical?: number
+  kubernetesCheck?: {
+    url: string
+    ca: Buffer
+  }
 }
 
 export class Server extends HttpServer {
@@ -18,6 +23,7 @@ export class Server extends HttpServer {
   private running: boolean = false
   private minumumCertificateDaysLeftWarning: number
   private minumumCertificateDaysLeftCritical: number
+  private kubernetesClient?: GcpKubernetesClient
 
   public constructor(options: ServerOptions) {
     super(options)
@@ -25,6 +31,12 @@ export class Server extends HttpServer {
     this.dnsNames = options.dnsNames
     this.minumumCertificateDaysLeftWarning = options.minumumCertificateDaysLeftWarning || 14
     this.minumumCertificateDaysLeftCritical = options.minumumCertificateDaysLeftCritical || 14
+    if (options.kubernetesCheck) {
+      this.kubernetesClient = new GcpKubernetesClient({
+        url: options.kubernetesCheck.url,
+        ca: options.kubernetesCheck.ca
+      })
+    }
   }
 
   public async start(): Promise<void> {
@@ -76,7 +88,13 @@ export class Server extends HttpServer {
   }
 
   private async checkDomains(): Promise<void> {
-    for (const domain of this.dnsNames) {
+    let ingressTlsNames: string[] = []
+    if (this.kubernetesClient) {
+      ingressTlsNames = await this.kubernetesClient.fetchAllIngressTlsNames()
+    }
+
+    const domains = [...new Set([...this.dnsNames, ...ingressTlsNames])]
+    for (const domain of domains) {
       const response = await checkDomain(domain, {
         family: 4,
         altNamesSameIp: true,

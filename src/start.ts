@@ -2,7 +2,11 @@ import log from '@connectedcars/logutil'
 
 import {
   getCheckInterval,
+  getCheckKubernetesIngress,
   getDnsNames,
+  getKubernetesServiceCa,
+  getKubernetesServiceHost,
+  getKubernetesServicePortHttps,
   getListenPort,
   getMinumumCertificateDaysLeftCritical,
   getMinumumCertificateDaysLeftWarning
@@ -15,12 +19,23 @@ async function main(): Promise<void> {
   const checkInterval = getCheckInterval()
   const minumumCertificateDaysLeftWarning = getMinumumCertificateDaysLeftWarning()
   const minumumCertificateDaysLeftCritical = getMinumumCertificateDaysLeftCritical()
+
+  let kubernetesCheck: { url: string; ca: Buffer } | undefined
+  if (getCheckKubernetesIngress()) {
+    const url = `https://${getKubernetesServiceHost()}:${getKubernetesServicePortHttps()}`
+    kubernetesCheck = {
+      url,
+      ca: getKubernetesServiceCa()
+    }
+  }
+
   const server = new Server({
     listenPort,
     dnsNames,
     checkInterval,
     minumumCertificateDaysLeftWarning,
-    minumumCertificateDaysLeftCritical
+    minumumCertificateDaysLeftCritical,
+    kubernetesCheck
   })
   await server.start()
   log.info(`HTTP server running at 0.0.0.0:${listenPort}`)
