@@ -1,11 +1,10 @@
+import { HTTPServer } from '@connectedcars/http-server'
 import log from '@connectedcars/logutil'
-import http from 'http'
 
-import { HttpIncomingMessage, HttpServer, HttpServerOptions } from './http/http-server'
 import { checkDomain, DomainCheckCriticalError, DomainCheckWarningError } from './https-cert-audit'
 import { GcpKubernetesClient } from './integration/gcp-kubernetes'
 
-export type ServerOptions = HttpServerOptions & {
+export type ServerOptions = HTTPServer.ServerOptions & {
   checkInterval?: number
   dnsNames: string[]
   minumumCertificateDaysLeftWarning?: number
@@ -16,7 +15,7 @@ export type ServerOptions = HttpServerOptions & {
   }
 }
 
-export class Server extends HttpServer {
+export class Server extends HTTPServer.Server {
   private checkIntervalHandle: NodeJS.Timeout | undefined
   private checkInterval: number
   private dnsNames: string[]
@@ -37,6 +36,17 @@ export class Server extends HttpServer {
         ca: options.kubernetesCheck.ca
       })
     }
+
+    // Health checks
+    this.get('/_status', async () => {
+      return { statusCode: 200, result: 'OK' }
+    })
+    this.get('/readiness', async () => {
+      return { statusCode: 200, result: 'OK' }
+    })
+    this.get('/liveness', async () => {
+      return { statusCode: 200, result: 'OK' }
+    })
   }
 
   public async start(): Promise<void> {
@@ -55,23 +65,6 @@ export class Server extends HttpServer {
       await new Promise(resolve => setTimeout(resolve, 100))
     }
     return super.stop()
-  }
-
-  protected async requestListener(req: HttpIncomingMessage, res: http.ServerResponse): Promise<void | unknown> {
-    switch (req.url) {
-      case '/_status':
-      case '/liveness':
-      case '/readiness': {
-        res.end()
-        return
-      }
-
-      default: {
-        res.statusCode = 404
-        res.end('Not found')
-        return
-      }
-    }
   }
 
   private checkDomainSync(): void {

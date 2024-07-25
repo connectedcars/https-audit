@@ -42,7 +42,7 @@ describe('server', () => {
       }
     })
 
-    const server = new Server({ dnsNames: ['google.com'] })
+    const server = new Server({ dnsNames: ['google.com'], listenPort: 0 })
     await server.start()
     await new Promise(resolve => setTimeout(resolve, 1000))
     await server.stop()
@@ -67,6 +67,7 @@ describe('server', () => {
     })
 
     const server = new Server({
+      listenPort: 0,
       dnsNames: ['google.com'],
       kubernetesCheck: {
         url: kubernetesTestServer.listenUrl,
