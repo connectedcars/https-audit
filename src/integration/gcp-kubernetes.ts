@@ -22,16 +22,18 @@ export class GcpKubernetesClient {
   public async fetchAllIngressTlsNames(): Promise<string[]> {
     await this.init()
     const k8sNetworkingClient = getGcpKubernetesClient(this.gcpAuthClient, k8s.NetworkingV1Api, this.url, this.ca)
-    const result: string[] = []
+    const result: Set<string> = new Set()
 
     const ingressResponse = await k8sNetworkingClient.listIngressForAllNamespaces()
     for (const ingress of ingressResponse.body.items) {
       if (ingress.spec?.tls) {
         const names = ingress.spec.tls.map(t => t.hosts || []).flat()
-        result.push(...names)
+        for (const name of names) {
+          result.add(name)
+        }
       }
     }
-    return result
+    return [...result]
   }
 
   private async init(): Promise<void> {
