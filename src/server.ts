@@ -88,12 +88,9 @@ export class Server extends HttpServer {
   }
 
   private async checkDomains(): Promise<void> {
-    const ingressTlsNames: string[] = []
+    let ingressTlsNames: string[] = []
     if (this.kubernetesClient) {
-      const tlsNames = await this.kubernetesClient.fetchAllIngressTlsNames()
-      for (const tlsName of tlsNames) {
-        ingressTlsNames.push(tlsName)
-      }
+        ingressTlsNames = await this.kubernetesClient.fetchAllIngressTlsNames()
     }
 
     const domains = [...new Set([...this.dnsNames, ...ingressTlsNames])]
