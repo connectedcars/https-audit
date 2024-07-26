@@ -1,12 +1,21 @@
-import { HttpServer, HttpsServerOptions } from '@connectedcars/test'
+import { HttpIncomingMessage, HttpServer, HttpsServerOptions } from '@connectedcars/test'
+import http from 'http'
 
 // tslint:disable-next-line:no-empty-interface
 export type GcpMetaDataTestServerOptions = HttpsServerOptions
 
 export class GcpMetaDataTestServer extends HttpServer {
-  public constructor(options: GcpMetaDataTestServerOptions) {
+  public constructor(
+    options: GcpMetaDataTestServerOptions,
+    requestListener?: (req: HttpIncomingMessage, res: http.ServerResponse) => unknown | void
+  ) {
     super(options, async (req, res) => {
       res.setHeader('Metadata-Flavor', 'Google')
+
+      // Try to see if the request was handled by the requestListener
+      if (requestListener && requestListener(req, res) !== undefined) {
+        return
+      }
 
       const parsedUrl = new URL(req.url, 'http://localhost')
       switch (parsedUrl.pathname) {

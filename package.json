@@ -22,6 +22,7 @@
     "prepublishOnly": "rm -rf build"
   },
   "dependencies": {
+    "@connectedcars/http-server": "^1.1.3",
     "@connectedcars/logutil": "^6.0.0",
     "@kubernetes/client-node": "^0.21.0",
     "googleapis": "^140.0.1"

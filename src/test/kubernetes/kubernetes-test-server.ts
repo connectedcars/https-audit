@@ -1,4 +1,5 @@
-import { HttpsServer, HttpsServerOptions } from '@connectedcars/test'
+import { HttpIncomingMessage, HttpsServer, HttpsServerOptions } from '@connectedcars/test'
+import http from 'http'
 
 import { get404Json } from './resources/get-404'
 import { getAllIngressJson } from './resources/get-all-ingress'
@@ -16,7 +17,10 @@ import { getServiceJson } from './resources/get-service'
 export type KubernetesTestServerOptions = HttpsServerOptions
 
 export class KubernetesTestServer extends HttpsServer {
-  public constructor(options: KubernetesTestServerOptions) {
+  public constructor(
+    options: KubernetesTestServerOptions,
+    requestListener?: (req: HttpIncomingMessage, res: http.ServerResponse) => unknown | void
+  ) {
     super(options, async (req, res) => {
       res.setHeader('Content-Type', 'application/json')
 
@@ -34,6 +38,11 @@ export class KubernetesTestServer extends HttpsServer {
             code: 401
           })
         )
+      }
+
+      // Try to see if the request was handled by the requestListener
+      if (requestListener && requestListener(req, res) !== undefined) {
+        return
       }
 
       // Map the responses
