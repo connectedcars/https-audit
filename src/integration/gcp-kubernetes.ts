@@ -37,7 +37,13 @@ export class GcpKubernetesClient {
   }
 
   private async init(): Promise<void> {
-    this.gcpAuthClient = await google.auth.getClient()
+    this.gcpAuthClient = await google.auth.getClient({
+      scopes: [
+        'https://www.googleapis.com/auth/cloud-platform',
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email'
+      ]
+    })
   }
 }
 
