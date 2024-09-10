@@ -50,7 +50,7 @@ export function getDnsNames(): string[] {
   if (process.env.DNS_NAMES) {
     return process.env.DNS_NAMES.split(',')
   }
-  throw new Error('DNS_NAMES is not set')
+  return []
 }
 
 export function getCheckInterval(): number {
