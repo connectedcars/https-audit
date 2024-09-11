@@ -104,7 +104,7 @@ export async function checkDomain(domain: string, options?: CheckDomainOptions):
           if ('code' in dnsName.error && dnsName.error.code === 'ENOTFOUND') {
             errors.push(new AltNameDoesResolveError(`Alt name ${subject} does not resolve`))
           }
-        } else if (dnsName.ip !== certificate.address) {
+        } else if (options?.altNamesSameIp && dnsName.ip !== certificate.address) {
           errors.push(
             new AltNameDoesResolveToSameIpError(
               `Alt name ${subject}(${dnsName.ip}) does not resolve to the same IP address as ${domain}(${certificate.address})`

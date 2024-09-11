@@ -86,11 +86,20 @@ export class Server extends HTTPServer.Server {
       ingressTlsNames = await this.kubernetesClient.fetchAllIngressTlsNames()
     }
 
-    const domains = [...new Set([...this.dnsNames, ...ingressTlsNames])]
+    const dnsNames = new Set(this.dnsNames)
+    const ingressDomains = new Set(ingressTlsNames)
+    const domains = [...new Set([...dnsNames, ...ingressDomains])]
+
     for (const domain of domains) {
+      // TODO: https-audit currently doesn't support if multiple IPs are associated with a DNS record
+      // TODO: This means that it only works for domains registered on our Google Load Balancers.
+      // TODO: Because of this, we can only enable same-IP validation for ingress domains.
+      // TODO: Story on fixing it: https://app.shortcut.com/connectedcars/story/120650/https-audit-should-support-validating-records-where-the-ip-can-change
+      const altNamesSameIp = ingressDomains.has(domain) ? true : false
+
       const response = await checkDomain(domain, {
         family: 4,
-        altNamesSameIp: true,
+        altNamesSameIp,
         minumumCertificateDaysLeftWarning: this.minumumCertificateDaysLeftWarning,
         minumumCertificateDaysLeftCritical: this.minumumCertificateDaysLeftCritical
       })
