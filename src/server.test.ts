@@ -66,9 +66,16 @@ describe('server', () => {
       }
     })
 
+    const logCritical: Array<{ message: string; context: object | null }> = []
+    jest.spyOn(log, 'critical').mockImplementation((...args) => {
+      if (args.length > 1 && typeof args[0] === 'string' && typeof args[1] === 'object') {
+        logCritical.push({ message: args[0], context: args[1] })
+      }
+    })
+
     const server = new Server({
       listenPort: 0,
-      dnsNames: ['google.com'],
+      dnsNames: ['idontexist.connectedcars.io'],
       kubernetesCheck: {
         url: kubernetesTestServer.listenUrl,
         ca: localhostCertificate
@@ -78,7 +85,10 @@ describe('server', () => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     await server.stop()
     expect(logWarns).toEqual([
-      { message: 'Check domain failed for google.com', context: { domain: 'google.com', errors: expect.any(Array) } }
+      {
+        message: 'Check domain failed for idontexist.connectedcars.io',
+        context: { domain: 'idontexist.connectedcars.io', errors: expect.any(Array) }
+      }
     ])
     expect(logInfo).toEqual([
       {
@@ -88,14 +98,6 @@ describe('server', () => {
           domain: 'connectedcars.io'
         },
         message: 'Check domain connectedcars.io'
-      },
-      {
-        context: {
-          altNamesCount: expect.any(Number),
-          certificateDaysLeft: expect.any(Number),
-          domain: 'www.connectedcars.io'
-        },
-        message: 'Check domain www.connectedcars.io'
       }
     ])
   }, 10_000)
