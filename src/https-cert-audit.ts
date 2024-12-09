@@ -93,31 +93,41 @@ export async function checkDomain(domain: string, options?: CheckDomainOptions):
     }
 
     const commonName = certificate.certificate.subject.CN
+
+    // Returns all domains registered for the certificate
     const altNames = certificate.certificate.subjectaltname?.split(/,\s*/).map(a => a.replace(/^DNS:/, '')) ?? []
     const subjects = [...new Set([commonName, ...altNames])]
-
-    // Check all subjects have a valid DNS names
-    for (const subject of subjects) {
-      if (!subject.startsWith('*')) {
-        const dnsName = await lookupDnsName(subject, { family: options?.family })
-        if (dnsName.error) {
-          if ('code' in dnsName.error && dnsName.error.code === 'ENOTFOUND') {
-            errors.push(new AltNameDoesResolveError(`Alt name ${subject} does not resolve`))
-          }
-        } else if (options?.altNamesSameIp && dnsName.ip !== certificate.address) {
-          errors.push(
-            new AltNameDoesResolveToSameIpError(
-              `Alt name ${subject}(${dnsName.ip}) does not resolve to the same IP address as ${domain}(${certificate.address})`
-            )
-          )
-        }
-      }
-    }
 
     const validTo = new Date(certificate.certificate.valid_to)
     const now = new Date()
     const daysLeft = Math.round((validTo.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
+    // If the certificate does not contain the domain, then fail immediately
+    if (!subjects.includes(domain)) {
+      errors.push(new NoCertificateForDomain(`Domain ${domain} does not exist in the given certificate`))
+      return {
+        domain,
+        subjectNames: subjects,
+        certificateDaysLeft: daysLeft,
+        errors
+      }
+    }
+
+    // Check all subjects have a valid DNS names
+    if (!domain.startsWith('*')) {
+      const dnsName = await lookupDnsName(domain, { family: options?.family })
+      if (dnsName.error) {
+        if ('code' in dnsName.error && dnsName.error.code === 'ENOTFOUND') {
+          errors.push(new AltNameDoesResolveError(`Alt name ${domain} does not resolve`))
+        }
+      } else if (options?.altNamesSameIp && dnsName.ip !== certificate.address) {
+        errors.push(
+          new AltNameDoesResolveToSameIpError(
+            `Alt name ${domain}(${dnsName.ip}) does not resolve to the same IP address as ${domain}(${certificate.address})`
+          )
+        )
+      }
+    }
     if (daysLeft < (options?.minumumCertificateDaysLeftCritical || 7)) {
       errors.push(new CertificateClosesToExpiredError(`Certificate expires in ${daysLeft} days`))
     } else if (daysLeft < (options?.minumumCertificateDaysLeftWarning || 14)) {
@@ -152,6 +162,7 @@ export class DomainCheckWarningError extends DomainCheckError {}
 
 export class AltNameDoesResolveError extends DomainCheckWarningError {}
 export class AltNameDoesResolveToSameIpError extends DomainCheckWarningError {}
+export class NoCertificateForDomain extends DomainCheckWarningError {}
 export class CertificateFailedValidationError extends DomainCheckCriticalError {}
 export class CertificateClosesToExpiredError extends DomainCheckCriticalError {}
 export class CertificateCriticallyCloseToExpiredError extends DomainCheckCriticalError {}

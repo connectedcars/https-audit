@@ -68,9 +68,6 @@ describe('getGcpKubernetesClient', () => {
       url: kubernetesTestServer.listenUrl,
       ca: localhostCertificate
     })
-    await expect(gcpKubernetesClient.fetchAllIngressTlsNames()).resolves.toEqual([
-      'connectedcars.io',
-      'www.connectedcars.io'
-    ])
+    await expect(gcpKubernetesClient.fetchAllIngressTlsNames()).resolves.toEqual(['api.connectedcars.io'])
   })
 })
