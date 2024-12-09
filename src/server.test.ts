@@ -42,12 +42,15 @@ describe('server', () => {
       }
     })
 
-    const server = new Server({ dnsNames: ['google.com'], listenPort: 0 })
+    const server = new Server({ dnsNames: ['idontexist.connectedcars.io'], listenPort: 0 })
     await server.start()
     await new Promise(resolve => setTimeout(resolve, 1000))
     await server.stop()
     expect(logWarns).toEqual([
-      { message: 'Check domain failed for google.com', context: { domain: 'google.com', errors: expect.any(Array) } }
+      {
+        message: 'Check domain failed for idontexist.connectedcars.io',
+        context: { domain: 'idontexist.connectedcars.io', errors: expect.any(Array) }
+      }
     ])
   }, 10_000)
 
@@ -95,10 +98,11 @@ describe('server', () => {
         context: {
           altNamesCount: expect.any(Number),
           certificateDaysLeft: expect.any(Number),
-          domain: 'connectedcars.io'
+          domain: 'api.connectedcars.io'
         },
-        message: 'Check domain connectedcars.io'
+        message: 'Check domain api.connectedcars.io'
       }
     ])
+    expect(logCritical).toEqual([])
   }, 10_000)
 })

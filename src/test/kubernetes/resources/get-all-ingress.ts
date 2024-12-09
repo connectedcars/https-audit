@@ -10,7 +10,7 @@ export const getAllIngressJson = {
         },
         creationTimestamp: '2024-05-08T09:23:36Z',
         generation: 1,
-        name: 'website',
+        name: 'api',
         namespace: 'default',
         resourceVersion: '1041785798',
         uid: '5db41c60-6aae-4a1e-8222-1092570bded9'
@@ -19,32 +19,13 @@ export const getAllIngressJson = {
         ingressClassName: 'nginx',
         rules: [
           {
-            host: 'connectedcars.io',
+            host: 'api.connectedcars.io',
             http: {
               paths: [
                 {
                   backend: {
                     service: {
-                      name: 'website',
-                      port: {
-                        name: 'http'
-                      }
-                    }
-                  },
-                  path: '/',
-                  pathType: 'ImplementationSpecific'
-                }
-              ]
-            }
-          },
-          {
-            host: 'www.connectedcars.io',
-            http: {
-              paths: [
-                {
-                  backend: {
-                    service: {
-                      name: 'website',
+                      name: 'api',
                       port: {
                         name: 'http'
                       }
@@ -59,7 +40,7 @@ export const getAllIngressJson = {
         ],
         tls: [
           {
-            hosts: ['connectedcars.io', 'www.connectedcars.io']
+            hosts: ['api.connectedcars.io']
           }
         ]
       },
