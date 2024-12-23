@@ -58,7 +58,7 @@
     "type": "git",
     "url": "git+https://github.com/connectedcars/http-audit.git"
   },
-  "author": "Troels Liebe Bentsen",
+  "author": "Connected Cars",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/connectedcars/http-audit/issues"
