@@ -35,7 +35,7 @@ export class GcpKubernetesClient {
         }
       }
     }
-    return [...result]
+    return Array.from(result)
   }
 
   private async init(): Promise<void> {
