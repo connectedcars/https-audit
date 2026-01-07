@@ -1,3 +1,4 @@
+import log from '@connectedcars/logutil'
 import dns from 'dns'
 import https from 'https'
 import { PeerCertificate, TLSSocket } from 'tls'
@@ -34,6 +35,13 @@ export async function getTlsCertificateInfo(
         if (certificate == null) {
           return reject(new Error('The website did not provide a certificate'))
         } else {
+          // Ensure response data is drained to avoid buffering memory
+          // when we don't consume the response body.
+          try {
+            res.resume()
+          } catch (error) {
+            log.error('Error resuming response', error)
+          }
           resolve({
             authorized: socket.authorized,
             authorizationError: socket.authorizationError,
@@ -44,6 +52,10 @@ export async function getTlsCertificateInfo(
         }
       }
     )
+    // Prevent hanging sockets by enforcing a reasonable timeout
+    req.setTimeout(15000, () => {
+      req.destroy(new Error('TLS request timeout'))
+    })
     req.on('error', e => {
       reject(e)
     })
