@@ -10,6 +10,8 @@ export class GcpKubernetesClient {
   private url: string
   private ca: Buffer
   private gcpAuthClient!: GoogleAuthClient
+  private initPromise?: Promise<void>
+  private networkingClient?: k8s.NetworkingV1Api
 
   public constructor(options: GcpKubernetesClientOptions) {
     this.url = options.url
@@ -21,7 +23,7 @@ export class GcpKubernetesClient {
 
   public async fetchAllIngressTlsNames(): Promise<string[]> {
     await this.init()
-    const k8sNetworkingClient = getGcpKubernetesClient(this.gcpAuthClient, k8s.NetworkingV1Api, this.url, this.ca)
+    const k8sNetworkingClient = this.getNetworkingClient()
     const result: Set<string> = new Set()
 
     const ingressResponse = await k8sNetworkingClient.listIngressForAllNamespaces()
@@ -37,13 +39,28 @@ export class GcpKubernetesClient {
   }
 
   private async init(): Promise<void> {
-    this.gcpAuthClient = await google.auth.getClient({
-      scopes: [
-        'https://www.googleapis.com/auth/cloud-platform',
-        'https://www.googleapis.com/auth/userinfo.profile',
-        'https://www.googleapis.com/auth/userinfo.email'
-      ]
-    })
+    if (this.gcpAuthClient) {
+      return
+    }
+    if (!this.initPromise) {
+      this.initPromise = (async () => {
+        this.gcpAuthClient = await google.auth.getClient({
+          scopes: [
+            'https://www.googleapis.com/auth/cloud-platform',
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email'
+          ]
+        })
+      })()
+    }
+    return this.initPromise
+  }
+
+  private getNetworkingClient(): k8s.NetworkingV1Api {
+    if (!this.networkingClient) {
+      this.networkingClient = getGcpKubernetesClient(this.gcpAuthClient, k8s.NetworkingV1Api, this.url, this.ca)
+    }
+    return this.networkingClient
   }
 }
 
