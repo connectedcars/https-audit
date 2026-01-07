@@ -88,7 +88,7 @@ export class Server extends HTTPServer.Server {
 
     const dnsNames = new Set(this.dnsNames)
     const ingressDomains = new Set(ingressTlsNames)
-    const domains = [...new Set([...dnsNames, ...ingressDomains])]
+    const domains = Array.from(new Set([...dnsNames, ...ingressDomains]))
 
     for (const domain of domains) {
       // TODO: https-audit currently doesn't support if multiple IPs are associated with a DNS record
